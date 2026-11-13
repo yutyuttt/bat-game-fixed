@@ -52,11 +52,6 @@ func load_level(level_path, _target_transition_area:String, _position_offset:Vec
 	room_load_end.emit()
 	await SceneTransUi.fade_out()
 	
-	
-func get_room_id(room) -> int:
-	var index = rooms.values().find(room)
-	return rooms.keys()[index] if index != -1 else -1
-	
 
 func go_back(_target_transition_area:String, _position_offset:Vector2):
 	var _temp_trans = _target_transition_area
