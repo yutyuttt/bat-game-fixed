@@ -34,23 +34,19 @@ func _ready() -> void:
 		_:
 			print("shit fuck what the hell")
 	
-	if self.level == null:
-		if RoomManager.current_id not in RoomManager.room_transitions.keys():
-			if not is_return_door:
-				match side:
-					SIDE.LEFT:
-						#if counter > 4: generate end room left, if boss room picked update roommanager boss_room_exists
-						#if boss room exists: generate end room left
-						self.level = possible_rooms_left.pick_random()
-						#update counter
-					SIDE.RIGHT:
-						self.level = possible_rooms_right.pick_random()
-					SIDE.TOP:
-						self.level = possible_rooms_top.pick_random()
-					SIDE.BOTTOM:
-						self.level = possible_rooms_bottom.pick_random()
-		else:
-			self.level = RoomManager.room_transitions[RoomManager.current_id][side]["level"]
+	if self.level == null and not is_return_door:
+		match side:
+			SIDE.LEFT:
+				#if counter > 4: generate end room left, if boss room picked update roommanager boss_room_exists
+				#if boss room exists: generate end room left
+				self.level = possible_rooms_left.pick_random()
+				#update counter
+			SIDE.RIGHT:
+				self.level = possible_rooms_right.pick_random()
+			SIDE.TOP:
+				self.level = possible_rooms_top.pick_random()
+			SIDE.BOTTOM:
+				self.level = possible_rooms_bottom.pick_random()
 
 	if RoomManager.current_id != -1:
 		# init dict if not present
