@@ -33,26 +33,35 @@ func _ready() -> void:
 			target_transition_area = "EnterTop"
 		_:
 			print("shit fuck what the hell")
-	match side:
-		SIDE.LEFT:
-			if not is_return_door and self.level == null:
-				#if counter > 4: generate end room left, if boss room picked update roommanager boss_room_exists
-				#if boss room exists: generate end room left
-				self.level = possible_rooms_left.pick_random()
-				#update counter
-		SIDE.RIGHT:
-			if not is_return_door and self.level == null:
-				self.level = possible_rooms_right.pick_random()
-		SIDE.TOP:
-			if not is_return_door and self.level == null:
-				self.level = possible_rooms_top.pick_random()
-		SIDE.BOTTOM:
-			if not is_return_door and self.level == null:
-				self.level = possible_rooms_bottom.pick_random()
-	if self.is_return_door and self.level == null:
-		self.level = RoomManager.previous
+	
+	if self.level == null:
+		if RoomManager.current_id not in RoomManager.room_transitions.keys():
+			if not is_return_door:
+				match side:
+					SIDE.LEFT:
+						#if counter > 4: generate end room left, if boss room picked update roommanager boss_room_exists
+						#if boss room exists: generate end room left
+						self.level = possible_rooms_left.pick_random()
+						#update counter
+					SIDE.RIGHT:
+						self.level = possible_rooms_right.pick_random()
+					SIDE.TOP:
+						self.level = possible_rooms_top.pick_random()
+					SIDE.BOTTOM:
+						self.level = possible_rooms_bottom.pick_random()
+		else:
+			self.level = RoomManager.room_transitions[RoomManager.current_id][side]["level"]
+
+	if RoomManager.current_id != -1:
+		# init dict if not present
+		if RoomManager.current_id not in RoomManager.room_transitions.keys():
+			RoomManager.room_transitions[RoomManager.current_id] = {}
+		if side not in RoomManager.room_transitions[RoomManager.current_id].keys():
+			RoomManager.room_transitions[RoomManager.current_id][side] = {}
+
 	if Engine.is_editor_hint():
 		return
+		
 	monitoring = false
 	player_pos()
 	await RoomManager.room_load_end
@@ -66,19 +75,39 @@ func _ready() -> void:
 	update_area()
 	
 func on_player_entered(_player:Node2D):
+	if RoomManager.current_id != -1:
+		if "id" in RoomManager.room_transitions[RoomManager.current_id][side]:
+			var id = RoomManager.room_transitions[RoomManager.current_id][side]["id"]
+			RoomManager.load_level(RoomManager.rooms[id], target_transition_area, get_offset(), false, id)
+			return
+			
 	if self.is_return_door:
 		RoomManager.go_back(target_transition_area,get_offset())
 	else:
 		self.is_return_door = true
-		RoomManager.load_level(level, target_transition_area, get_offset(), false)
+		if RoomManager.current_id != -1:
+			RoomManager.queued_trans_room = get_tree().current_scene.scene_file_path
+		
+		var opp_side: SIDE
+		match side:
+			SIDE.LEFT:
+				opp_side = SIDE.RIGHT
+			SIDE.RIGHT:
+				opp_side = SIDE.LEFT
+			SIDE.TOP:
+				opp_side = SIDE.BOTTOM
+			SIDE.BOTTOM:
+				opp_side = SIDE.TOP
+		RoomManager.load_level(level, target_transition_area, get_offset(), false, -1, opp_side)
 
 func player_pos():
 	if self.name != RoomManager.target_transition_area:
 		return
-	else:
-		if not self.is_return_door:
-			self.is_return_door = true
-		PlayerManager.player_spawn_point(global_position + RoomManager.position_offset)
+	
+	if not self.is_return_door:
+		self.is_return_door = true
+		#RoomManager.room_transitions[RoomManager.current_id][side]["return"] = true
+	PlayerManager.player_spawn_point(global_position + RoomManager.position_offset)
 	
 func get_offset()->Vector2:
 	var offset : Vector2 = Vector2.ZERO
